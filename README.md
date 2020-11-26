@@ -1,2 +1,3 @@
-# ansible-maverick
-Supplementary material for the "Ansible Maverick" Book
+# Ansible Maverick
+
+Here is the source code just in case you haven't mastered touch typing yet 😉
