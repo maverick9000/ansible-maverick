@@ -1,0 +1,4 @@
+check process mongo matching "mongod" 
+   start program = "/bin/systemctl start mongodb"
+   stop program = "/bin/systemctl stop mongodb"
+   if 5 restarts within 5 cycles then timeout

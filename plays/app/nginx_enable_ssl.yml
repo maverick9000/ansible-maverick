@@ -1,0 +1,91 @@
+- import_playbook: "../../plays/nginx/dhparam.yml"
+
+- hosts: all
+  become: true
+
+  tasks:
+  - name: check nginx installed
+    stat:
+      path: /etc/nginx/sites-available
+    register: nginx_installed
+
+  - name: check app cert exists
+    stat:
+      path: /etc/letsencrypt/live/{{website_url}}
+    register: app_cert
+
+  - name: check current/public exists
+    stat:
+      path: /var/www/{{app.environment}}/{{app.name}}/current/public
+    register: shared_public
+
+  - name: install ssl certificate in current/public
+    shell: /usr/bin/certbot certonly --webroot -w /var/www/{{app.environment}}/{{app.name}}/current/public -d {{website_url}}
+    when: not app_cert.stat.exists and not shared_public.stat.exists
+
+  - name: install develop thin nginx ssl virtualhost file
+    template:
+      src: "{{inventory_dir}}/files/app/nginx/thin/nginx_develop.ssl.virtualhost"
+      dest: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: nginx_installed.stat.exists and app.environment == 'develop' and num_thins > 0
+
+  - name: install staging thin nginx ssl virtualhost file
+    template:
+      src: "{{inventory_dir}}/files/app/nginx/thin/nginx_staging.ssl.virtualhost"
+      dest: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: nginx_installed.stat.exists and app.environment == 'staging' and num_thins > 0
+
+  - name: install production thin nginx ssl virtualhost file
+    template:
+      src: "{{inventory_dir}}/files/app/nginx/thin/nginx_production.ssl.virtualhost"
+      dest: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: nginx_installed.stat.exists and app.environment == 'production' and num_thins > 0
+
+  - name: install develop puma nginx ssl virtualhost file
+    template:
+      src: "{{inventory_dir}}/files/app/nginx/puma/nginx_develop.ssl.virtualhost"
+      dest: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: nginx_installed.stat.exists and app.environment == 'develop' and puma_required
+
+  - name: install staging puma nginx ssl virtualhost file
+    template:
+      src: "{{inventory_dir}}/files/app/nginx/puma/nginx_staging.ssl.virtualhost"
+      dest: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: nginx_installed.stat.exists and app.environment == 'staging' and puma_required
+
+  - name: install production puma nginx ssl virtualhost file
+    template:
+      src: "{{inventory_dir}}/files/app/nginx/puma/nginx_production.ssl.virtualhost"
+      dest: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: nginx_installed.stat.exists and app.environment == 'production' and puma_required
+
+  - name: symlink nginx virtualhost file
+    file:
+      src: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      dest: /etc/nginx/sites-enabled/{{app.environment}}/{{app.name}}.conf
+      state: link
+    when: nginx_installed.stat.exists
+
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
+    ignore_errors: true

@@ -1,0 +1,91 @@
+upstream {{app.name}}_{{app.environment}}_thin_cluster {
+  server unix:/var/www/{{app.environment}}/{{app.name}}/shared/sockets/thin.1.socket;
+  server unix:/var/www/{{app.environment}}/{{app.name}}/shared/sockets/thin.2.socket;
+}
+
+server {
+  listen   80;
+  listen   [::]:80;
+  server_name  {{website_url}} *.{{website_url}};
+
+  access_log /var/www/{{app.environment}}/{{app.name}}/shared/log/nginx_access.log;
+  error_log /var/www/{{app.environment}}/{{app.name}}/shared/log/nginx_error.log;
+
+  root /var/www/{{app.environment}}/{{app.name}}/current/public;
+  index  index.html;
+
+  location ~ /.well-known/acme-challenge {
+    root /var/www/{{app.environment}}/{{app.name}}/current/public;
+    allow all;
+  }
+
+  location ~ (\.php|.aspx|.asp|myadmin) {
+      return 404;
+  }
+
+  location @rails_app {
+    proxy_set_header  X-Real-IP  $remote_addr;
+    proxy_set_header  Host $host;
+    proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header  X-Forwarded-Proto $scheme;
+    proxy_set_header  X-Forwarded-Ssl on; # Optional
+    proxy_set_header  X-Forwarded-Port $server_port;
+    proxy_set_header  X-Forwarded-Host $host;
+
+    proxy_set_header Host $http_host;
+    proxy_redirect off;
+
+    if (-f $request_filename/index.html) {
+      rewrite (.*) $1/index.html break;
+    }
+
+    if (-f $request_filename.html) {
+      rewrite (.*) $1.html break;
+    }
+
+    if (!-f $request_filename) {
+      proxy_pass http://{{app.name}}_{{app.environment}}_thin_cluster;
+      break;
+    }
+  }
+
+  location ~* \.(eot|ttf|woff)$ {
+      add_header Access-Control-Allow-Origin *;
+  }
+
+  location ~* \.(js|css|jpg|jpeg|gif|png|swf|svg)$ {
+     proxy_set_header Host $http_host;
+     if (-f $request_filename) {
+      expires      max;
+      break;
+    }
+
+    try_files $uri @rails_app;
+  }
+
+  if (-f $document_root/system/maintenance.html) {
+    rewrite  ^(.*)$  /system/maintenance.html last;
+    break;
+  }
+
+  location / {
+    proxy_set_header  X-Real-IP  $remote_addr;
+    proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_redirect off;
+
+    if (-f $request_filename/index.html) {
+      rewrite (.*) $1/index.html break;
+    }
+
+    if (-f $request_filename.html) {
+      rewrite (.*) $1.html break;
+    }
+
+    if (!-f $request_filename) {
+      proxy_pass http://{{app.name}}_{{app.environment}}_thin_cluster;
+      break;
+    }
+  }
+}
+

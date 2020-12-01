@@ -1,0 +1,44 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: install munin prerequisites
+    apt:
+      name: munin-node
+      state: latest
+    when: munin_slave
+
+  - name: make munin-node listen to master ip
+    lineinfile:
+      dest: /etc/munin/munin-node.conf
+      regexp:   "^allow .{{ munin_master.regex }}.$"
+      line:   "allow ^{{ munin_master.escaped_ip }}$"
+      insertafter: "^allow"
+    when: munin_slave
+
+  - name: set munin-node hostname
+    lineinfile:
+      dest: /etc/munin/munin-node.conf
+      regexp: "host_name munin.{{website_url}}"
+      line:   "host_name munin.{{website_url}}"
+    when: munin_slave
+
+  - name: open port 4949 in UFW only for munin master
+    ufw:
+      rule: allow
+      port: 4949
+      from_ip: "{{munin_master.ip}}"
+    when: munin_slave
+
+  - name: open port 4948 in UFW only for munin master
+    ufw:
+      rule: allow
+      port: 4948
+      from_ip: "{{munin_master.ip}}"
+    when: munin_slave
+
+  - name: restart munin-node
+    service:
+      name: munin-node
+      state: restarted
+    when: munin_slave

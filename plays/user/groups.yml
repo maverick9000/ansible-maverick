@@ -1,0 +1,23 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: add rvm, {{nginx.user}}
+    group:
+      name: "{{item}}"
+      state: present
+    loop:
+    - "{{nginx.user}}"
+    - rvm
+
+  - name: add sudo group
+    group:
+      name: sudo
+      state: present
+    when: ansible_distribution == 'Debian'
+
+  - name: add admin group
+    group:
+      name: admin
+      state: present
+    when: ansible_distribution == 'Ubuntu'

@@ -1,0 +1,17 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: check app exists
+    stat:
+      path: /var/www/{{app.environment}}/{{app.name}}/current
+    register: app_exists
+
+  - pause:
+      prompt: "{{app.name}} already exists do you want to proceed? (y/n)"
+    register: proceed_app_exists
+    when: app_exists.stat.exists
+
+  - fail:
+      msg: "Not continuing because app already exists"
+    when: app_exists.stat.exists == true and proceed_app_exists.user_input == 'n'

@@ -1,0 +1,53 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: create /var/www/{{app.environment}}/{{app.name}}
+    file:
+      dest: /var/www/{{app.environment}}/{{app.name}}
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: "g+rws"
+      recurse: true
+
+  - name: create /var/www/{{app.environment}}/{{app.name}}/*
+    file:
+      dest: /var/www/{{app.environment}}/{{app.name}}/{{item}}
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: "g+rws"
+      recurse: true
+    loop:
+    - releases
+    - shared
+
+  - name: create /var/www/{{app.environment}}/{{app.name}}/shared/*
+    file:
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/{{item}}
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: "g+rws"
+      recurse: true
+    loop:
+    - config
+    - log
+    - pids
+    - scripts
+    - sockets
+    - tmp
+    - backup
+    - bundle
+
+  - name: create /var/www/{{app.environment}}/{{app.name}}/shared/backup/*
+    file:
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/backup/{{item}}
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: "g+rws"
+      recurse: true
+    loop:
+    - models

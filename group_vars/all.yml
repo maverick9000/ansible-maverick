@@ -1,0 +1,108 @@
+app:
+  name: 'app'
+  environment: 'develop'
+  ruby: 'ruby-2.6.6'
+
+hostname: "{{app.name}}.consolemaverick.com"
+website_url: "{{app.name}}.{{app.environment}}.consolemaverick.com"
+etc_backup_required: false
+
+configure_db: false
+make_db_superuser: false
+num_thins: 0
+puma_required: true
+
+psql_required: false
+psql_type: web
+psql_version: 13
+psql_max_connections: 100
+
+influxdb_required: false
+memcached_required: false
+mysql_required: false
+redis_required: false
+elasticsearch_required: false
+grafana_required: false
+
+mongodb_required: false
+mongodb_package: mongodb
+mongodb_version: '3.6'
+
+zsh_version: 5.1.1
+
+munin_slave: true
+
+sidekiq_required: false
+sidekiq6_required: false
+num_sidekiq: 2
+
+resque:
+  workers: 0
+  scheduler: false
+
+global_ruby: 'ruby-2.4.1'
+user: 'maverick'
+sysadmin_email: 'devops@consolemaverick.com'
+
+nginx:
+  user: 'www-data'
+  group: 'www-data'
+
+password_length: '15'
+password_protect: false
+
+twofactor_required: false
+
+ssl_monit: false
+ssl_munin: false
+
+aws:
+  access_key: '2KIAI3sdffas3H545F5GTX4Q'
+  secret: '1AKKX0r1BtJi+UQWyPnWMIjd/PnVme0pBVUk42342'
+  region: 'us-west-1'
+  bucket: ''
+
+munin_master:
+  ip: '192.168.33.12'
+  escaped_ip: '192\.`168\.33\.12'
+  regex: '192..168..33..12'
+  host: 'munin.consolemaverick.com'
+
+gitlab:
+  login: 'maverick'
+  password: '02chrasfwtf23GW'
+  server_url: "https://gitlab.consolemaverick.com"
+  login_token: "2rhasfewS-7KjSsfsyDfCJHw"
+  group: "maverick"
+  import_url: "https://maverick:goq22jwsgfdsdQW@githttps.consolemaverick.com/"
+
+s3:
+  key: "2KIAI3sdffas3H545F5GTX4Q"
+  secret: "1AKKX0r1BtJi+UQWyPnWMIjd/PnVme0pBVUk42342"
+  region: 'us-west-1'
+  bucket: 'maverick-backups'
+  mail_from: 'backup@consolemaverick.com'
+  mail_address: 'localhost'
+  mail_port: 25
+  mail_authentication: 'none'
+  mail_domain: 'consolemaverick.com'
+
+monit:
+  server_name: 'monit.consolemaverick.com'
+  master_server_ip: '192.168.33.12'
+
+grafana:
+  user: 'admin'
+  password: 'OcezOdweidMjdvvOh'
+  port: 8080
+
+gcp_postfix_required: false
+
+sendgrid_password: 'sendgrid_password'
+sendgrid_username: 'apikey'
+
+imagemagick_required: false
+
+swap_file_path: /swapfile
+swap_file_size: 4G
+swappiness: 1

@@ -1,0 +1,39 @@
+- import_playbook: "../plays/groups.yml"
+
+- hosts: all
+  become: true
+
+  vars_prompt:
+  - name: "password"
+    prompt: "password for maverick"
+    private: true
+    encrypt: "md5_crypt"
+    confirm: yes
+    salt_size: 7
+
+  tasks:
+  - name: adding user
+    user:
+      name: "maverick"
+      shell: /bin/bash
+      password: "{{password}}"
+      groups: "{{nginx.user}},rvm,docker,staff,sudo"
+
+  - name: add ssh key
+    authorized_key:
+      user: "maverick"
+      key: "https://github.com/maverick9000.keys"
+
+  - name: add to admin user group
+    user:
+      name: "maverick"
+      groups: admin
+      append: true
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: add to sudo user group
+    user:
+      name: "maverick"
+      groups: sudo
+      append: true
+    when: ansible_distribution == 'Debian'

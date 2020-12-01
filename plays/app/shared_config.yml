@@ -1,0 +1,33 @@
+- hosts: all
+  become: true
+
+  vars:
+    secret_key_base: "{{ lookup('password', '~/.ansible/'+ansible_hostname+'/app/'+app.name+'_'+app.environment+'_secret_key_base length=128') }}"
+    database_password: "{{ lookup('password', '~/.ansible/'+ansible_hostname+'/app/'+app.name+'_'+app.environment+'_database_password length={{password_length}}') }}"
+
+  tasks:
+    - name: create database name
+      set_fact:
+        postgresql_db_name: "{{app.name}}_{{app.environment}}"
+
+    - name: replace . with _ in db name
+      set_fact:
+        clean_psql_db_name: "{{ postgresql_db_name | regex_replace('\\.','_') }}"
+
+    - name: create yml files
+      template:
+        src: "{{inventory_dir}}/files/app/{{item}}"
+        dest: "/var/www/{{app.environment}}/{{app.name}}/shared/config/{{item}}"
+        owner: "{{nginx.user}}"
+        group: "{{nginx.user}}"
+      loop:
+        - "secrets.yml"
+        - "database.yml"
+        - "app_config.yml"
+        - "s3_config.yml"
+
+    - name: install additional postgresql packages
+      apt:
+        name: libpq-dev
+        state: latest
+      when: psql_required

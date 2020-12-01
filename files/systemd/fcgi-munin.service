@@ -1,0 +1,16 @@
+[Unit]
+Description=FastCGI spawner for munin
+
+[Service]
+ExecStart=/usr/bin/spawn-fcgi -s /var/run/munin/fcgi-graph.sock \
+        -P /var/run/munin-fcgi.pid \
+        -u {{nginx.user}} -g {{nginx.group}} /usr/lib/munin/cgi/munin-cgi-graph
+Environment=
+
+Type=forking
+PIDFile=/var/run/munin-fcgi.pid
+Restart=always
+SyslogIdentifier=fastcgi-munin
+
+[Install]
+WantedBy=multi-user.target

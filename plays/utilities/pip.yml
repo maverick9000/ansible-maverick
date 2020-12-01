@@ -1,0 +1,16 @@
+- hosts: all
+  become: yes
+
+  tasks:
+  - name: configure pip install directory
+    file:
+      path: /home/{{user}}/.config/pip
+      state: directory
+      recurse: true
+
+  - name: install pip configuration file
+    template:
+      src: "{{inventory_dir}}/files/pip/pip.conf"
+      dest: /home/{{user}}/.config/pip/pip.conf
+      owner: "{{user}}"
+      group: "{{user}}"

@@ -1,0 +1,183 @@
+- hosts: all
+  become: true
+  ignore_errors: true
+
+  tasks:
+  - name: update cache
+    shell: apt-get update
+
+  - name: chown /home/{{user}}
+    file:
+      dest: /home/{{user}}
+      owner: "{{user}}"
+      recurse: yes
+    ignore_errors: true
+
+  - name: create src tmp dir
+    file:
+      path: /home/{{user}}/tmp
+      state: directory
+      owner: "{{user}}"
+
+  - name: install git
+    apt:
+      name: git
+      state: present
+      update_cache: false
+
+  - name: install git-core
+    apt:
+      name: git-core
+      state: present
+      update_cache: false
+
+  - name: install curl
+    apt:
+      name: curl
+      state: present
+      update_cache: false
+
+  - name: install python-software-properties
+    apt:
+      name: python-software-properties
+      state: present
+      update_cache: false
+
+  - name: install python-passlib
+    apt:
+      name: python-passlib
+      state: present
+      update_cache: false
+
+  - name: install python-pip
+    apt:
+      name: python-pip
+      state: latest
+
+  - name: install python-dev
+    apt:
+      name: python-dev
+      state: present
+
+  - name: install apt-transport-https
+    apt:
+      name: apt-transport-https
+      state: present
+      update_cache: false
+
+  - name: install acl
+    apt:
+      name: acl
+      state: present
+      update_cache: false
+
+  - name: install build-essential
+    apt:
+      name: build-essential
+      state: present
+      update_cache: false
+
+  - name: install zlib1g-dev
+    apt:
+      name: zlib1g-dev
+      state: present
+      update_cache: false
+
+  - name: install libssl-dev
+    apt:
+      name: libssl-dev
+      state: present
+      update_cache: false
+
+  - name: install libreadline-dev
+    apt:
+      name: libreadline-dev
+      state: present
+      update_cache: false
+
+  - name: install libyaml-dev
+    apt:
+      name: libyaml-dev
+      state: present
+      update_cache: false
+
+  - name: install libxml2-dev
+    apt:
+      name: libxml2-dev
+      state: present
+      update_cache: false
+
+  - name: install libxslt1-dev
+    apt:
+      name: libxslt1-dev
+      state: present
+      update_cache: false
+
+  - name: install libcurl4-openssl-dev
+    apt:
+      name: libcurl4-openssl-dev
+      state: present
+      update_cache: false
+
+  - name: install libffi-dev
+    apt:
+      name: libffi-dev
+      state: present
+      update_cache: false
+
+  - name: install libncurses-dev
+    apt:
+      name: libncurses-dev
+      state: present
+
+  - name: install sqlite3
+    apt:
+      name: sqlite3
+      state: present
+      update_cache: false
+
+  - name: install libsqlite3-dev
+    apt:
+      name: libsqlite3-dev
+      state: present
+      update_cache: false
+
+  - name: install mlocate
+    apt:
+      name: mlocate
+      state: present
+
+  - name: run updatedb
+    shell: updatedb
+
+  - name: install aptitude
+    apt:
+      name: aptitude
+      state: present
+
+  - name: install python-dev
+    apt:
+      name: python-dev
+      state: present
+
+  - name: install libfreetype6-dev
+    apt:
+      name: libfreetype6-dev
+      state: present
+
+  - name: make sure pip3 is installed
+    apt:
+      pkg: python-pip3
+      state: present
+    when: ansible_distribution_major_version|int == 20
+
+  - name: install webp packages
+    apt:
+      name: {{item}}
+      state: present
+    items:
+      - libjpeg-dev
+      - libpng-dev
+      - libtiff-dev
+      - libwebp-dev
+

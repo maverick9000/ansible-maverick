@@ -1,0 +1,29 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: check monit cert exists
+    stat: path=/etc/letsencrypt/live/monit.{{website_url}}
+    register: monit_cert
+
+  - name:
+    shell: /usr/bin/letsencrypt certonly --webroot -w /var/www/services/monit -d https://monit.{{website_url}}
+    when: not monit_cert.stat.exists
+
+  - name: create nginx ssl enabled virtualhost for munin
+    template:
+      src: "{{inventory_dir}}/files/nginx/munin.ssl.conf"
+      dest: /etc/nginx/sites-available/services/munin.ssl.conf
+
+  - name: symlink monit nginx virtualhost configuration
+    file:
+      src: /etc/nginx/sites-available/services/monit.ssl.conf
+      dest: /etc/nginx/sites-enabled/services/monit.conf
+      state: link
+
+  - name: restart nginx
+    service:
+       name: nginx
+       state: restarted
+  - name: install monit
+    apt: name=monit

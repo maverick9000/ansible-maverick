@@ -1,0 +1,16 @@
+- hosts: all
+  become: true
+  ignore_errors: true
+
+  tasks:
+    - name: set permissions of config yml files to group writeable
+      file:
+        path: /var/www/{{app.environment}}/{{app.name}}/shared/config/{{item}}
+        mode: 0664
+      loop:
+        - "secrets.yml"
+        - "database.yml"
+        - "scheduler.yml"
+        - "sidekiq.yml"
+        - "app_config.yml"
+        - "s3_config.yml"

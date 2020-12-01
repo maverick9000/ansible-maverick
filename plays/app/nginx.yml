@@ -1,0 +1,80 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: check nginx installed
+    stat:
+      path: /etc/nginx/sites-available
+    register: nginx_installed
+
+  - name: trash /var/www/html
+    file:
+      state: absent
+      path: /var/www/html
+
+  - name: install develop nginx thin virtualhost file
+    template:
+      src: "{{inventory_dir}}/files/app/nginx/thin/nginx_develop.virtualhost"
+      dest: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: nginx_installed.stat.exists and app.environment == 'develop' and num_thins > 0
+
+  - name: install staging nginx thin virtualhost file
+    template:
+      src: "{{inventory_dir}}/files/app/nginx/thin/nginx_staging.virtualhost"
+      dest: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: nginx_installed.stat.exists and app.environment == 'staging' and num_thins > 0
+
+  - name: install production nginx thin virtualhost file
+    template:
+      src: "{{inventory_dir}}/files/app/nginx/thin/nginx_production.virtualhost"
+      dest: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: nginx_installed.stat.exists == true and app.environment == 'production' and num_thins > 0
+
+  - name: install develop nginx puma virtualhost file
+    template:
+      src: "{{inventory_dir}}/files/app/nginx/puma/nginx_develop.virtualhost"
+      dest: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: nginx_installed.stat.exists and app.environment == 'develop' and puma_required
+
+  - name: install staging nginx puma virtualhost file
+    template:
+      src: "{{inventory_dir}}/files/app/nginx/puma/nginx_staging.virtualhost"
+      dest: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: nginx_installed.stat.exists and app.environment == 'staging' and puma_required
+
+  - name: install production nginx puma virtualhost file
+    template:
+      src: "{{inventory_dir}}/files/app/nginx/puma/nginx_production.virtualhost"
+      dest: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: nginx_installed.stat.exists == true and app.environment == 'production' and puma_required
+
+  - name: symlink nginx virtualhost file
+    file:
+      src: /etc/nginx/sites-available/{{app.environment}}/{{app.name}}.conf
+      dest: /etc/nginx/sites-enabled/{{app.environment}}/{{app.name}}.conf
+      state: link
+    when: nginx_installed.stat.exists == true
+
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
+    ignore_errors: true

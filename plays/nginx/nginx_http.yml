@@ -1,0 +1,86 @@
+- import_playbook: ../plays/nginx_directories.yml
+
+- hosts: all
+  become: true
+
+  vars:
+    monit_munin_admin_password: "{{ lookup('password', '~/.ansible/'+ansible_hostname+'/monit_munin_admin_password length={{password_length}}') }}"
+
+  roles:
+  - role: geerlingguy.nginx
+    nginx_remove_default_vhost: true
+    nginx_vhosts: []
+
+  tasks:
+  - name: optimize nginx.conf file
+    template:
+      src: "../files/nginx/nginx.conf"
+      dest: /etc/nginx/nginx.conf
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+
+  - name: add user to {{nginx.user}} group
+    shell: "usermod -aG {{nginx.user}} {{user}}"
+
+  - name: install apache2-utils for htpasswd
+    apt:
+      name: "{{item}}"
+      state: latest
+      update_cache: true
+    loop:
+    - apache2-utils
+
+  - name: create /etc/nginx/auth/production|staging|develop
+    file:
+      dest: /etc/nginx/auth/{{item}}
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+      recurse: true
+    loop:
+    - staging
+    - production
+    - develop
+
+  - name: configure nginx process monitoring
+    template:
+      src: "../files/monit/{{item}}"
+      dest: /etc/monit/conf-available/services/nginx
+      owner: "root"
+      group: "root"
+      mode: 0644
+
+  - name: link nginx process monitoring
+    file:
+      src: /etc/monit/conf-available/services/nginx
+      dest: /etc/monit/conf-enabled/services/nginx
+      state: link
+
+  - name: create nginx virtualhost for monit
+    template:
+      src: "../files/nginx/monit.conf"
+      dest: /etc/nginx/sites-available/services/monit.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+
+  - name: symlink monit nginx virtualhost configuration
+    file:
+      src: /etc/nginx/sites-available/services/monit.conf
+      dest: /etc/nginx/sites-enabled/services/monit.conf
+      state: link
+
+  - name: password protect monit
+    htpasswd:
+      path: /etc/nginx/auth/monit.htpasswd
+      name: admin
+      password: "{{monit_munin_admin_password}}"
+      owner: root
+      group: "{{nginx.user}}"
+      mode: 0640
+
+  - name: restart monit
+    service:
+      name: monit
+      state: reloaded

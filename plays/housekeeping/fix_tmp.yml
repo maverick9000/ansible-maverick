@@ -1,0 +1,10 @@
+- hosts: all
+  become: true
+  ignore_errors: true
+
+  tasks:
+  - name: Fix /home/{{user}}/tmp
+    file:
+      path: "/home/{{user}}/tmp"
+      owner: "{{user}}"
+      group: "{{user}}"

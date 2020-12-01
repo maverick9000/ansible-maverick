@@ -1,0 +1,8 @@
+check process memcached matching "memcached" 
+  start program = "/bin/systemctl start memcached"
+  stop program = "/bin/systemctl stop memcached"
+  if failed host 127.0.0.1 port 11211 for 2 cycles then restart
+  if cpu > 60% for 2 cycles then alert
+  if cpu > 80% for 5 cycles then restart
+  if totalmem > 1 GB for 3 cycles then alert
+  if 5 restarts within 5 cycles then timeout

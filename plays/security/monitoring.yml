@@ -1,0 +1,9 @@
+- hosts: all
+  become: true
+
+  roles:
+  - role: cmacrae.sensu
+    sensu_master: true
+    sensu_include_dashboard: true
+    rabbitmq_server: true
+    redis_server: true

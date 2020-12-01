@@ -1,0 +1,11 @@
+check process {{app.name}}_{{app.environment}}_puma with pidfile /var/www/{{app.environment}}/{{app.name}}/shared/pids/puma.pid
+    start program = "/var/www/{{app.environment}}/{{app.name}}/shared/scripts/puma.sh start" as uid "{{nginx.user}}" and gid "{{nginx.user}}"
+    stop program  = "/var/www/{{app.environment}}/{{app.name}}/shared/scripts/puma.sh stop" as uid "{{nginx.user}}" and gid "{{nginx.user}}"
+    if cpu > 60% for 2 cycles then alert
+    if cpu > 80% for 5 cycles then restart
+    if totalmem > 2 GB for 5 cycles then restart
+    if 3 restarts within 5 cycles then timeout
+    group {{app.name}}_{{app.environment}}_ruby
+    group {{app.name}}_{{app.environment}}_puma
+    group {{app.name}}_{{app.environment}}
+    group all_{{app.environment}}_ruby

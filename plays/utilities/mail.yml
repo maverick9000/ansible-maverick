@@ -1,0 +1,16 @@
+- hosts: all
+  become: true
+  ignore_errors: true
+
+  tasks:
+  - name: install mailutils
+    apt:
+      name: mailutils
+      state: present
+      update_cache: false
+
+  - name: install mutt
+    apt:
+      name: mutt
+      state: present
+      update_cache: false

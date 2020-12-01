@@ -1,0 +1,26 @@
+- hosts: all
+  become: true
+
+  roles:
+  - role: undergreen.mongodb
+    when: mongodb_required
+
+  tasks:
+  - name: configure mongodb process monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/mongodb"
+      dest: /etc/monit/conf-available/services/mongodb
+    when: mongodb_required
+
+  - name: link mongodb process monitoring
+    file:
+      src: /etc/monit/conf-available/services/mongodb
+      dest: /etc/monit/conf-enabled/services/mongodb
+      state: link
+    when: mongodb_required
+
+  - name: restart monit
+    service:
+      name: monit
+      state: restarted
+    when: mongodb_required

@@ -1,0 +1,18 @@
+- hosts: all
+  become: true
+  become_user: postgres
+
+  tasks:
+  - name: create root postgresql database
+    postgresql_db: name=root
+    when: psql_required and ansible_distribution_major_version|int <= 18
+
+  - name: create root postgresql user
+    postgresql_user:
+      db: root
+      name: root
+      priv: ALL
+    when: psql_required and ansible_distribution_major_version|int <= 18
+
+   #create role root with login;
+   #create database root with owner root;

@@ -1,0 +1,42 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: set facts
+    set_fact:
+      dir_name: 'etc'
+      dir_location: '/etc'
+
+  - name: create {{global_ruby}}@backup gemset
+    shell: "/usr/local/rvm/bin/rvm {{global_ruby}} do rvm gemset create backup"
+
+  - name: install bundler into backup gemset
+    shell: "/usr/local/rvm/bin/rvm {{global_ruby}}@backup do gem install bundler"
+
+  - name: install backup gem into backup gemset
+    shell: "/usr/local/rvm/bin/rvm {{global_ruby}} do gem install backup -v5.0.0.beta.2"
+
+  - name: create server specific backup configuration file
+    template:
+      src: "{{inventory_dir}}/files/backup/config.rb"
+      dest: /var/backups/config.rb
+
+  - name: create /var/backups/models/
+    file:
+      dest: /var/backups/models
+      state: directory
+      recurse: true
+
+  - name: create server specific backup configuration file
+    template:
+      src: "{{inventory_dir}}/files/backup/models/config.rb"
+      dest: /var/backups/models/config.rb
+
+  - name: insert etc_backup crontab
+    cron:
+      name: "etc_backup"
+      minute: 0
+      hour: 1
+      user: "root"
+      job: "bash -c 'source /usr/local/rvm/scripts/rvm;rvm {{global_ruby}}@backup > /dev/null;backup perform -t etc_backup -c /var/backups/config.rb > /dev/null 2>&1'"
+      #cron_file: etc_backup

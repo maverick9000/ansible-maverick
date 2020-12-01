@@ -1,0 +1,79 @@
+- hosts: all
+  become: true
+
+  vars:
+    database_password: "{{ lookup('password', '~/.ansible/'+ansible_hostname+'/app/'+app.name+'_'+app.environment+'_database_password length={{password_length}}') }}"
+
+  tasks:
+  - name: check psql running
+    stat: path=/var/run/postgresql/.s.PGSQL.5432
+    register: postgresql_socket
+    when: psql_required
+
+  - name: install pip postgresql db configuration prerequisites for Ubuntu 18
+    pip:
+      name: "{{item}}"
+    become_user: root
+    when: psql_required and postgresql_socket.stat.exists and configure_db
+    loop:
+      - 'psycopg2-binary'
+      - psycopg2
+    when: ansible_distribution_major_version|int <= 18
+
+  - name: install psycopg2 for Ubuntu 20
+    shell: pip3 install psycopg2-binary
+    when: ansible_distribution_major_version|int == 20
+    become_user: root
+
+  - name: install apt postgresql db configuration prerequisites
+    apt:
+      pkg: 'libpq-dev'
+    when: psql_required and postgresql_socket.stat.exists and configure_db
+
+  - name: create database name
+    set_fact:
+      postgresql_db_name: "{{app.name}}_{{app.environment}}"
+    when: psql_required
+    become_user: postgres
+
+  - name: replace . with _ in db name
+    set_fact:
+      clean_psql_db_name: "{{ postgresql_db_name | regex_replace('\\.','_') }}"
+    when: psql_required
+
+  - name: create postgresql db {{ clean_psql_db_name }}
+    postgresql_db:
+      name: "{{ clean_psql_db_name }}"
+    when: psql_required and postgresql_socket.stat.exists and configure_db and ansible_distribution_major_version|int <=18
+    become_user: postgres
+
+  - name: create postgresql role {{app.name}}_{{app.environment}}
+    postgresql_user:
+      db: "{{ clean_psql_db_name }}"
+      name: "{{ clean_psql_db_name }}"
+      password: "{{database_password}}"
+      encrypted: true
+      priv: ALL
+    when: psql_required and postgresql_socket.stat.exists and configure_db and not make_db_superuser and ansible_distribution_major_version|int <=18
+    become_user: postgres
+
+  - name: create superuser postgresql role {{app.name}}_{{app.environment}}
+    postgresql_user:
+      db: "{{ clean_psql_db_name }}"
+      name: "{{ clean_psql_db_name }}"
+      password: "{{database_password}}"
+      priv: ALL
+      encrypted: true
+      role_attr_flags: SUPERUSER
+    when: psql_required and postgresql_socket.stat.exists and configure_db and make_db_superuser and ansible_distribution_major_version|int <=18
+    become_user: postgres
+
+  - name: configure common extension
+    postgresql_ext:
+      name: "{{item}}"
+      db: "{{ clean_psql_db_name }}"
+    loop:
+      - hstore
+      - uuid-ossp
+    when: psql_required and postgresql_socket.stat.exists and configure_db and ansible_distribution_major_version|int <=18
+    become_user: postgres

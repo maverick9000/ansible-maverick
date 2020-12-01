@@ -1,0 +1,88 @@
+- import_playbook: "../../plays/monit/monit_directories.yml"
+- import_playbook: "../../plays/nginx/nginx_directories.yml"
+- import_playbook: "../../plays/nginx/dhparam.yml"
+
+- hosts: all
+  become: true
+
+  vars:
+    dig: "{{lookup('dig', 'grafana.{{website_url}}')}}"
+
+  roles:
+  - role: cloudalchemy.grafana
+    grafana_port: 8080
+    grafana_security : { admin_user: "{{grafana.user}}", admin_password: "{{grafana.password}}" }
+    when: grafana_required
+
+  tasks:
+  - name: create /var/www/services/grafana directory
+    file:
+      path: /var/www/services/grafana
+      state: directory
+      owner: "{{user}}"
+      group: "{{user}}"
+    when: grafana_required
+
+  - name: configure grafana process monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/grafana"
+      dest: /etc/monit/conf-available/services/grafana
+    when: grafana_required
+
+  - name: link grafana process monitoring
+    file:
+      src: /etc/monit/conf-available/services/grafana
+      dest: /etc/monit/conf-enabled/services/grafana
+      state: link
+    when: grafana_required
+
+  - name: restart monit
+    service:
+      name: monit
+      state: restarted
+    when: grafana_required
+
+  - name: create nginx virtualhost for grafana
+    template:
+      src: "{{inventory_dir}}/files/nginx/grafana.conf"
+      dest: /etc/nginx/sites-available/services/grafana.conf
+    when: grafana_required
+
+  - name: symlink grafana nginx virtualhost configuration
+    file:
+      src: /etc/nginx/sites-available/services/grafana.conf
+      dest: /etc/nginx/sites-enabled/services/grafana.conf
+      state: link
+    when: grafana_required
+
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
+    when: grafana_required
+
+  - name: check grafana cert exists
+    stat: path=/etc/letsencrypt/live/grafana.{{website_url}}
+    register: grafana_cert
+    when: grafana_required
+
+  - name:
+    shell: /usr/bin/letsencrypt certonly --webroot -w /var/www/services/grafana -d grafana.{{website_url}}
+
+  - name: create nginx ssl enabled virtualhost for grafana
+    template:
+      src: "{{inventory_dir}}/files/nginx/grafana.ssl.conf"
+      dest: /etc/nginx/sites-available/services/grafana.ssl.conf
+    when: grafana_required
+
+  - name: symlink grafana nginx virtualhost configuration
+    file:
+      src: /etc/nginx/sites-available/services/grafana.ssl.conf
+      dest: /etc/nginx/sites-enabled/services/grafana.conf
+    when: grafana_required
+
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
+    when: grafana_required

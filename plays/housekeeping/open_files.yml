@@ -1,0 +1,12 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: increase amount of open files
+    shell: sysctl -w fs.file-max=100000
+
+  - name: make it persist between reboots
+    lineinfile:
+      dest: /etc/sysctl.conf
+      regexp: "fs.file-max = 100000"
+      line: "fs.file-max = 100000"

@@ -1,0 +1,108 @@
+- import_playbook: ../munin/munin_plugins.yml
+- import_playbook: ../munin/munin_bandwidth.yml
+
+- hosts: all
+  become: true
+
+  vars:
+    monit_munin_admin_password: "{{ lookup('password', '~/.ansible/'+ansible_hostname+'/monit_munin_admin_password length={{password_length}}') }}"
+
+  tasks:
+  - stat: path=/usr/bin/memcached
+    register: memcached_executable
+    when: not munin_slave
+
+  - stat: path=/usr/bin/psql
+    register: postgresql_executable
+    when: not munin_slave
+
+  - stat: path=/usr/sbin/nginx
+    register: nginx_executable
+    when: not munin_slave
+
+  - name: install munin
+    apt: name={{item}}
+    loop:
+    - munin
+    - liblwp-useragent-determined-perl
+    - libwww-perl
+    - libdbd-pg-perl
+    when: not munin_slave
+
+  - name: configure munin
+    template:
+      src: "{{inventory_dir}}/files/munin/munin.conf"
+      dest: /etc/munin/munin.conf
+    when: not munin_slave
+
+  - name: create /var/www/services/munin
+    file:
+      dest: /var/www/services/munin
+      state: directory
+      owner: munin
+      recurse: yes
+      group: "{{nginx.user}}"
+      mode: 0775
+
+  - name: create nginx virtualhost for munin
+    template:
+      src: "{{inventory_dir}}/files/nginx/munin.conf"
+      dest: /etc/nginx/sites-available/services/munin.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+
+  - name: symlink munin virtualhost
+    file:
+      src: /etc/nginx/sites-available/services/munin.conf
+      dest: /etc/nginx/sites-enabled/services/munin.conf
+      state: link
+
+  - name: restart monit
+    service: name=monit state=reloaded
+    when: not munin_slave
+
+  - name: password protect monit
+    htpasswd:
+      path: /etc/nginx/auth/munin.htpasswd
+      name: admin
+      password: "{{monit_munin_admin_password}}"
+      owner: root
+      group: "{{nginx.user}}"
+      mode: 0640
+    when: not munin_slave
+
+  - name: install spawn-fcgi
+    apt: name=spawn-fcgi
+    when: not munin_slave
+
+  - name: create spawn-fcgi systemd script
+    template:
+      src: "{{inventory_dir}}/files/systemd/fcgi-munin.service"
+      dest: /etc/systemd/system/fcgi-munin.service
+    when: not munin_slave
+
+  - name: start fcgi
+    command: systemctl start fcgi-munin
+    when: not munin_slave
+
+  - name: set custom url for nginx_status
+    blockinfile:
+      dest: /etc/munin/plugin-conf.d/munin-node
+      backup: true
+      marker: ""
+      block: |
+        [nginx*]
+        env.url https://monit.{{website_url}}/nginx_status
+    when: not munin_slave
+
+  - name: restart munin-node
+    service:
+      name: munin-node
+      state: restarted
+    when: not munin_slave
+
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted

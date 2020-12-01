@@ -1,0 +1,45 @@
+- import_playbook: "../app/directories.yml"
+
+- hosts: all
+  become: true
+
+  vars:
+    database_password: "{{ lookup('password', '~/.ansible/'+ansible_hostname+'/app/'+app.name+'_'+app.environment+'_database_password length={{password_length}}') }}"
+
+  tasks:
+  - name: install global ruby
+    shell: /usr/local/rvm/bin/rvm install {{global_ruby}}
+
+  - name: create {{global_ruby}}@{{app.name}}_{{app.environment}}_backup gemset
+    shell: "/usr/local/rvm/bin/rvm {{global_ruby}} do rvm gemset create {{app.name}}_{{app.environment}}_backup"
+    when: app.environment == 'production'
+
+  - name: install bundler into backup gemset
+    shell: "/usr/local/rvm/bin/rvm {{global_ruby}}@{{app.name}}_{{app.environment}}_backup do gem install bundler"
+    when: app.environment == 'production'
+
+  - name: install backup gem into backup gemset
+    shell: "/usr/local/rvm/bin/rvm {{global_ruby}}@{{app.name}}_{{app.environment}}_backup do gem install backup -v=5.0.0.beta.2"
+    when: app.environment == 'production'
+
+  - name: create app specific backup configuration file
+    template:
+      src: "{{inventory_dir}}/files/app/backup/config.rb"
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/backup/config.rb
+    when: app.environment == 'production'
+
+  - name: create app specific backup configuration model file
+    template:
+      src: "{{inventory_dir}}/files/app/backup/models/config.rb"
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/backup/models/config.rb
+    when: app.environment == 'production'
+
+  - name: insert backup job crontab
+    cron:
+      name: "{{app.name}}_{{app.environment}}_backup"
+      minute: 0
+      hour: "1"
+      user: "root"
+      job: "bash -c 'source /usr/local/rvm/scripts/rvm;rvm {{global_ruby}}@{{app.name}}_{{app.environment}}_backup &>/dev/null;backup perform -qt {{app.name}}_{{app.environment}}_psql_backup,{{app.name}}_{{app.environment}}_directory_backup -c /var/www/{{app.environment}}/{{app.name}}/shared/backup/config.rb'"
+      #cron_file: "{{app.name}}_{{app.environment}}_backup"
+    when: app.environment == 'production'

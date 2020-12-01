@@ -1,0 +1,37 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: create env script
+    template:
+      src: "{{inventory_dir}}/files/app/scripts/env.sh"
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/scripts/env.sh
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+
+  - name: create console script
+    template:
+      src: "{{inventory_dir}}/files/app/scripts/console.sh"
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/scripts/console.sh
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+
+  - name: create thin server script
+    template:
+      src: "{{inventory_dir}}/files/app/scripts/thin.sh"
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/scripts/thin.sh
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+    when: num_thins > 0
+
+  - name: create puma server script
+    template:
+      src: "{{inventory_dir}}/files/app/scripts/puma.sh"
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/scripts/puma.sh
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+    when: puma_required

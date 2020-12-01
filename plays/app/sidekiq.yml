@@ -1,0 +1,59 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: create /etc/monit/conf-available/{{app.environment}}
+    file: dest=/etc/monit/conf-available/{{app.environment}}
+
+  - name: create sidekiq app script
+    template:
+      src: "{{inventory_dir}}/files/app/scripts/sidekiq.sh"
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/scripts/sidekiq.sh
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+    when: sidekiq_required and not sidekiq6_required
+
+  - name: create sidekiq6 app script
+    template:
+      src: "{{inventory_dir}}/files/app/scripts/sidekiq6.sh"
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/scripts/sidekiq.sh
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+    when: sidekiq6_required
+
+  - name: create sidekiq6 monit script
+    template:
+      src: "{{inventory_dir}}/files/monit/scripts/sidekiq6.sh"
+      dest: /etc/monit/scripts/sidekiq.sh
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+    when: sidekiq6_required
+
+  - name: configure sidekiq monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/sidekiq"
+      dest: /etc/monit/conf-available/{{app.environment}}/{{app.name}}_{{app.environment}}_sidekiq.conf
+    when: sidekiq_required
+
+  - name: link sidekiq monitoring
+    file:
+      src: /etc/monit/conf-available/{{app.environment}}/{{app.name}}_{{app.environment}}_sidekiq.conf
+      dest: /etc/monit/conf-enabled/{{app.environment}}/{{app.name}}_{{app.environment}}_sidekiq.conf
+      state: link
+    when: sidekiq_required
+
+  - name: create sidekiq.yml file
+    template:
+      src: "{{inventory_dir}}/files/app/sidekiq.yml"
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/config/sidekiq.yml
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+    when: sidekiq_required
+
+  - name: restart monit
+    service:
+      name: monit
+      state: reloaded

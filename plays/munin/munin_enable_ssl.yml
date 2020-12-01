@@ -1,0 +1,32 @@
+- import_playbook: "../../plays/nginx/dhparam.yml"
+
+- hosts: all
+  become: true
+
+  tasks:
+  - name: check munin cert exists
+    stat: path=/etc/letsencrypt/live/munin.{{website_url}}
+    register: munin_cert
+
+  - name:
+    shell: /usr/bin/letsencrypt certonly --webroot -w /var/www/services/munin -d https://munin.{{website_url}}
+    when: not munin_cert.stat.exists
+
+  - name: create nginx ssl enabled virtualhost for munin
+    template:
+      src: "{{inventory_dir}}/files/nginx/munin.ssl.conf"
+      dest: /etc/nginx/sites-available/services/munin.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+
+  - name: symlink munin virtualhost
+    file:
+      src: /etc/nginx/sites-available/services/munin.conf
+      dest: /etc/nginx/sites-enabled/services/munin.conf
+      state: link
+
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted

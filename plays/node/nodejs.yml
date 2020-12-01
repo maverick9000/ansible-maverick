@@ -1,0 +1,12 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: add 14.x repo
+    shell: curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+
+  - name: install nodejs
+    shell: aptitude install -ry nodejs
+
+  - name: install npm
+    shell: aptitude install -ry npm

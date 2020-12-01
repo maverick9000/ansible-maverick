@@ -1,0 +1,14 @@
+- hosts: all
+  become: yes
+
+  tasks:
+  - name: install nodejs
+    apt:
+      name: nodejs
+      state: present
+
+  - name: install npm
+    apt:
+      name: npm
+      state: present
+      update_cache: false

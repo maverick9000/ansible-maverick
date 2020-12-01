@@ -1,0 +1,16 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: Build | generate the missing locale and reconfigure locales
+    command: locale-gen --purge en_US.UTF-8
+    ignore_errors: true
+
+  - name: Build | Reconfigure locales
+    command: echo -e 'LANG="en_US.UTF-8"\nLANGUAGE="en_US:en"\n' > /etc/default/locale
+    ignore_errors: true
+
+  - name: locale test
+    locale_gen:
+      name: "en_US.UTF-8"
+      state: present

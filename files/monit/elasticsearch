@@ -1,0 +1,4 @@
+check process elasticsearch with pidfile /var/run/elasticsearch/elasticsearch.pid
+    start program = "/bin/systemctl start elasticsearch"
+    stop  program = "/bin/systemctl stop elasticsearch"
+    if 5 restarts within 5 cycles then timeout

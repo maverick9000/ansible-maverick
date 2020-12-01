@@ -1,0 +1,76 @@
+- import_playbook: "../../plays/monit/monit_directories.yml"
+
+- hosts: all
+  become: true
+
+  tasks:
+  - name: Import InfluxDB GPG signing key
+    apt_key:
+      url: https://repos.influxdata.com/influxdb.key
+      state: present
+    when: influxdb_required
+
+  - name: Add InfluxDB repository
+    apt_repository:
+      repo: 'deb https://repos.influxdata.com/ubuntu focal stable'
+      state: present
+    when: influxdb_required
+
+  - name: Install InfluxDB packages
+    apt:
+      name: influxdb
+      state: present
+    when: influxdb_required
+
+  - name: create /var/run/influxdb
+    file:
+      dest: /var/run/influxdb
+      state: directory
+      owner: influxdb
+      group: influxdb
+      mode: 0775
+      recurse: true
+    when: influxdb_required
+
+  - name: Configure InfluxDB systemctl for Ubuntu 18
+    template:
+      src: "{{inventory_dir}}/files/systemd/influxdb.service.18"
+      dest: /etc/systemd/system/influxdb.service
+    when: influxdb_required
+    when: ansible_distribution_major_version|int <= 18
+
+  - name: Configure InfluxDB systemctl for Ubuntu 20
+    template:
+      src: "{{inventory_dir}}/files/systemd/influxdb.service.18"
+      dest: /etc/systemd/system/influxdb.service
+    when: influxdb_required
+    when: ansible_distribution_major_version|int >= 20
+
+  - name: Reload systemctl
+    shell: systemctl daemon-reload
+    when: influxdb_required
+
+  - name: Configure InfluxDB monit for Ubuntu 18
+    template:
+      src: "{{inventory_dir}}/files/monit/influxdb"
+      dest: /etc/monit/conf-available/services/influxdb
+    when: influxdb_required && ansible_distribution_major_version|int <= 18
+
+  - name: Configure InfluxDB monit for Ubuntu 20
+    template:
+      src: "{{inventory_dir}}/files/monit/influxdb"
+      dest: /etc/monit/conf-available/services/influxdb
+    when: influxdb_required && ansible_distribution_major_version|int >= 20
+
+  - name: Link InfluxDB monit process configuration
+    file:
+      src: /etc/monit/conf-available/services/influxdb
+      dest: /etc/monit/conf-enabled/services/influxdb
+      state: link
+    when: influxdb_required
+
+  - name: Restart monit
+    service:
+      name: monit
+      state: reloaded
+    when: influxdb_required

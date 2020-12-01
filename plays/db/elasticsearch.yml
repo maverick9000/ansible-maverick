@@ -1,0 +1,23 @@
+- hosts: all
+  become: true
+
+  roles:
+  - role: geerlingguy.java
+    when: elasticsearch_required
+
+  - role: geerlingguy.elasticsearch
+    when: elasticsearch_required
+
+  tasks:
+  - name: configure elasticsearch process monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/elasticsearch"
+      dest: /etc/monit/conf-available/services/elasticsearch
+    when: elasticsearch_required
+
+  - name: link elasticsearch process monitoring
+    file:
+      src: /etc/monit/conf-available/services/elasticsearch
+      dest: /etc/monit/conf-enabled/services/elasticsearch
+      state: link
+    when: elasticsearch_required

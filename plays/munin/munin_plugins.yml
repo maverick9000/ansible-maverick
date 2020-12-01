@@ -1,0 +1,55 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: install psql munin prerequisites
+    apt:
+      name: libdbd-pg-perl
+
+  - name: link nginx plugins
+    file:
+      src: /usr/share/munin/plugins/{{item}}
+      dest: /etc/munin/plugins/{{item}}
+      state: link
+    loop:
+    - nginx_request
+    - nginx_status
+
+  - name: link postgres plugins
+    file:
+      src: /usr/share/munin/plugins/{{item}}
+      dest: /etc/munin/plugins/{{item}}
+      state: link
+    loop:
+    - postgres_users
+    - postgres_xlog
+    - postgres_bgwriter
+    - postgres_connections_db
+    - postgres_checkpoints
+
+  - name: link configurable postgres plugins
+    file:
+      src: /usr/share/munin/plugins/{{item}}
+      dest: /etc/munin/plugins/{{item}}ALL
+      state: link
+    loop:
+    - postgres_cache_
+    - postgres_connections_
+    - postgres_locks_
+    - postgres_querylength_
+    - postgres_size_
+    - postgres_transactions_
+
+  - name: link configurable postgres plugins
+    file:
+      src: /usr/share/munin/plugins/memcached_
+      dest: /etc/munin/plugins/memcached_{{item}}
+      state: link
+    loop:
+    - bytes
+    - commands
+    - conns
+    - evictions
+    - items
+    - memory
+    - unfetched

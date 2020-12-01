@@ -1,0 +1,19 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: install monit full debug script
+    template:
+      src: "{{inventory_dir}}/files/monit/monitdebug"
+      dest:  /usr/bin/monitdebug
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+
+  - name: install monit minimal debug script
+    template:
+      src: "{{inventory_dir}}/files/monit/monitrun"
+      dest:  /usr/bin/monitrun
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775

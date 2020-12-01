@@ -1,0 +1,62 @@
+- import_playbook: monit_directories.yml
+
+- hosts: all
+  become: true
+
+  tasks:
+  - name: install monit
+    apt: name=monit
+
+  - name: create monitrc
+    template:
+      src: "{{inventory_dir}}/files/monit/monitrc"
+      dest: /etc/monit/monitrc
+
+  - name: create disk_space monitoring configuration
+    template:
+      src: "{{inventory_dir}}/files/monit/disk_space"
+      dest: /etc/monit/conf-available/services/disk_space
+
+  - name: link disk_space monitoring configuration
+    file:
+      src: /etc/monit/conf-available/services/disk_space
+      dest: /etc/monit/conf-enabled/services/disk_space
+      state: link
+
+  - name: create scripts directory
+    file:
+      dest: /etc/monit/scripts
+      state: directory
+
+  - name: create nginx virtualhost for monit
+    template:
+      src: "{{inventory_dir}}/files/nginx/monit.conf"
+      dest: /etc/nginx/sites-available/services/monit.conf
+      owner: "root"
+      group: "root"
+      mode: 0644
+
+  - name: symlink monit nginx virtualhost configuration
+    file:
+      src: /etc/nginx/sites-available/services/monit.conf
+      dest: /etc/nginx/sites-enabled/services/monit.conf
+      state: link
+
+  - name: password protect monit
+    htpasswd:
+      path: /etc/nginx/auth/monit.htpasswd
+      name: admin
+      password: "{{monit_munin_admin_password}}"
+      owner: root
+      group: "{{nginx.user}}"
+      mode: 0640
+
+  - name: restart monit
+    service:
+      name: monit
+      state: restarted
+
+  - name: restart nginx
+    service:
+       name: nginx
+       state: restarted

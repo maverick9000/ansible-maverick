@@ -1,0 +1,75 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: create /etc/nginx/sites-available/production
+    file:
+      dest: /etc/nginx/sites-available/production
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+      recurse: true
+
+  - name: create /etc/nginx/sites-available/staging
+    file:
+      dest: /etc/nginx/sites-available/staging
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+      recurse: true
+
+  - name: create /etc/nginx/sites-available/develop
+    file:
+      dest: /etc/nginx/sites-available/develop
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+      recurse: true
+
+  - name: create /etc/nginx/sites-available/services
+    file:
+      dest: /etc/nginx/sites-available/services
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+      recurse: true
+
+  - name: create /etc/nginx/sites-enabled/production
+    file:
+      dest: /etc/nginx/sites-enabled/production
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+      recurse: true
+
+  - name: create /etc/nginx/sites-enabled/staging
+    file:
+      dest: /etc/nginx/sites-enabled/staging
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+      recurse: true
+
+  - name: create /etc/nginx/sites-enabled/develop
+    file:
+      dest: /etc/nginx/sites-enabled/develop
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+      recurse: true
+
+  - name: create /etc/nginx/sites-enabled/services
+    file:
+      dest: /etc/nginx/sites-enabled/services
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+      recurse: true

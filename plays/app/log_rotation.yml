@@ -1,0 +1,8 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: setup log rotation
+    template:
+      src: "{{inventory_dir}}/files/app/logrotate"
+      dest: /etc/logrotate.d/{{app.name}}_{{app.environment}}

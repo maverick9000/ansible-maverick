@@ -1,0 +1,12 @@
+- hosts: localhost
+  connection: local
+  become: false
+
+  tasks:
+  - name: Create pingdom check
+    pingdom_api: >
+      siteURL="{{website_url}}"
+      siteName="{{app.name}} - {{app.environment}}"
+    register: result
+    when: pingdom_required
+    ignore_errors: true

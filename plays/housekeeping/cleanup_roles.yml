@@ -1,0 +1,22 @@
+- hosts: all
+
+  tasks:
+  - name: disable git access to dotfiles.powerline
+    file:
+      state: absent
+      path: /home/{{user}}/.config/dotfiles.powerline/.git
+
+  - name: disable git access to dotfiles.tmux
+    file:
+      state: absent
+      path: /home/{{user}}/.config/dotfiles.tmux/.git
+
+  - name: disable git access to dotfiles.powerline
+    file:
+      state: absent
+      path: /home/{{user}}/.config/dotfiles.vim/.git
+
+  - name: disable git access to dotfiles.powerline
+    file:
+      state: absent
+      path: /home/{{user}}/.config/dotfiles.zsh/.git

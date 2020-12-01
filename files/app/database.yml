@@ -1,0 +1,5 @@
+{{app.environment}}:
+  adapter: postgresql
+  password: "{{database_password}}"
+  username: {{clean_psql_db_name}}
+  database: {{clean_psql_db_name}}

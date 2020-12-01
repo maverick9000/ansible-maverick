@@ -1,0 +1,22 @@
+- hosts: all
+  become: true
+
+  roles:
+  - role: rvm_io.ruby
+    rvm1_rubies: ["{{app.ruby}}", "{{global_ruby}}"]
+    rvm1_bundler_install: true
+    rvm1_install_path: /usr/local/rvm
+    rvm1_user: root
+    rvm1_install_flags: '--auto-dotfiles'
+
+  tasks:
+  - name: install rvm source script
+    template:
+      src: "{{inventory_dir}}/files/scripts/rvm"
+      dest: /usr/local/lib/rvm
+
+  - name: add user to rvm group
+    shell: "usermod -aG rvm {{user}}"
+
+  - name: install global ruby
+    shell: /usr/local/rvm/bin/rvm install {{global_ruby}}

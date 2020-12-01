@@ -1,0 +1,2 @@
+check filesystem root_disk_space with path /
+  if space usage > 85% then alert

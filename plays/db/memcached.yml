@@ -1,0 +1,36 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: install memcached prerequisites
+    apt:
+      name: libsasl2-dev
+      state: latest
+      update_cache: true
+    when: memcached_required
+
+  - name: install memcached
+    apt:
+      name: memcached
+      state: latest
+      update_cache: true
+    when: memcached_required
+
+  - name: configure memcached process monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/memcached"
+      dest: /etc/monit/conf-available/services/memcached
+    when: memcached_required
+
+  - name: link memcached process monitoring
+    file:
+      src: /etc/monit/conf-available/services/memcached
+      dest: /etc/monit/conf-enabled/services/memcached
+      state: link
+    when: memcached_required
+
+  - name: restart monit
+    service:
+      name: monit
+      state: reloaded
+    when: memcached_required

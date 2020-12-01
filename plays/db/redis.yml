@@ -1,0 +1,28 @@
+- import_playbook: "../../plays/monit/monit_directories.yml"
+
+- hosts: all
+  become: true
+
+  tasks:
+  - name: install redis
+    apt: name=redis-server
+    when: redis_required
+
+  - name: configure redis process monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/redis"
+      dest: /etc/monit/conf-available/services/redis
+    when: redis_required
+
+  - name: link redis process monitoring
+    file:
+      src: /etc/monit/conf-available/services/redis
+      dest: /etc/monit/conf-enabled/services/redis
+      state: link
+    when: redis_required
+
+  - name: restart monit
+    service:
+      name: monit
+      state: restarted
+    when: redis_required

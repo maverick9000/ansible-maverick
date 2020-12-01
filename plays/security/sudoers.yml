@@ -1,0 +1,11 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: add {{nginx.user}} to sudoers file
+    lineinfile:
+      dest: /etc/sudoers
+      state: present
+      regexp: '^%{{nginx.user}}'
+      line: '%{{nginx.user}} ALL=({{nginx.user}})NOPASSWD: ALL: ALL=(root)NOPASSWD: /usr/local/bin/monit'
+      validate: 'visudo -cf %s'

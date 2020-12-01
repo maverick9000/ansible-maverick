@@ -1,0 +1,20 @@
+- import_playbook: "../../plays/user/groups.yml"
+
+- hosts: all
+  become: true
+
+  tasks:
+
+  - name: add to admin user group
+    user:
+      name: "maverick"
+      groups: admin,rvm,www-data
+      append: true
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: add to sudo user group
+    user:
+      name: "maverick"
+      groups: sudo,rvm,www-data
+      append: true
+    when: ansible_distribution == 'Debian'

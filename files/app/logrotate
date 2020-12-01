@@ -1,0 +1,9 @@
+/var/www/{{app.environment}}/{{app.name}}/shared/log/*.log {
+  daily
+  rotate 6
+  size 128M
+  compress
+  missingok
+  copytruncate
+  su www-data www-data
+}

@@ -1,0 +1,11 @@
+- hosts: all
+  become: yes
+
+  tasks:
+  - name: Get swap stats
+    shell: swapon -s
+    register: swap_stats
+
+  - name: Show swap stats
+    debug:
+      var: swap_stats.stdout

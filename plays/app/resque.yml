@@ -1,0 +1,73 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: create /etc/monit/scripts
+    file: dest=/etc/monit/scripts state=directory
+    when: resque.workers|int > 0
+
+  - name: create resque_worker.sh monit
+    template:
+      src: "{{inventory_dir}}/files/monit/scripts/resque_worker.sh"
+      dest: /etc/monit/scripts/resque_worker.sh
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+    when: resque.workers|int > 0
+
+  - name: create resque_worker app script
+    template:
+      src: "{{inventory_dir}}/files/app/scripts/resque_worker.sh"
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/scripts/resque_worker_{{item}}.sh
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+    with_sequence: count={{resque.workers|int}}
+    when: resque.workers|int > 0
+
+  - name: create resque_scheduler.sh
+    template:
+      src: "{{inventory_dir}}/files/monit/scripts/resque_scheduler.sh"
+      dest: /etc/monit/scripts/resque_scheduler.sh
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+    when: resque.scheduler
+
+  - name: create resque_scheduler script
+    template:
+      src: "{{inventory_dir}}/files/app/scripts/resque_scheduler.sh"
+      dest: /var/www/{{app.environment}}/{{app.name}}/shared/scripts/resque_scheduler.sh
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+    when: resque.scheduler
+
+  - name: configure resque process monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/app_resque"
+      dest: /etc/monit/conf-available/{{app.environment}}/{{app.name}}_{{app.environment}}_resque
+    when: resque.workers|int > 0
+
+  - name: link resque process monitoring
+    file:
+      src: /etc/monit/conf-available/{{app.environment}}/{{app.name}}_{{app.environment}}_resque
+      dest: /etc/monit/conf-enabled/{{app.environment}}/{{app.name}}_{{app.environment}}_resque
+      state: link
+    when: resque.workers|int > 0
+
+  - name: configure resque scheduler process monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/app_resque_scheduler"
+      dest: /etc/monit/conf-available/{{app.environment}}/{{app.name}}_{{app.environment}}_resque_scheduler
+    when: resque.scheduler
+
+  - name: link resque scheduler process monitoring
+    file:
+      src: /etc/monit/conf-available/{{app.environment}}/{{app.name}}_{{app.environment}}_resque_scheduler
+      dest: /etc/monit/conf-enabled/{{app.environment}}/{{app.name}}_{{app.environment}}_resque_scheduler
+      state: link
+    when: resque.scheduler
+
+  - name: restart monit
+    service: name=monit state=reloaded

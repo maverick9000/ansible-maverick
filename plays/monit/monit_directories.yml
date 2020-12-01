@@ -1,0 +1,43 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: create /etc/monit/conf-available/production directory
+    file:
+      dest: /etc/monit/conf-available/production
+      state: directory
+
+  - name: create /etc/monit/conf-available/staging directory
+    file:
+      dest: /etc/monit/conf-available/staging
+      state: directory
+
+  - name: create /etc/monit/conf-available/develop directory
+    file:
+      dest: /etc/monit/conf-available/develop
+      state: directory
+
+  - name: create /etc/monit/conf-available/services directory
+    file:
+      dest: /etc/monit/conf-available/services
+      state: directory
+
+  - name: create /etc/monit/conf-enabled/production directory
+    file:
+      dest: /etc/monit/conf-enabled/production
+      state: directory
+
+  - name: create /etc/monit/conf-enabled/staging directory
+    file:
+      dest: /etc/monit/conf-enabled/staging
+      state: directory
+
+  - name: create /etc/monit/conf-enabled/develop directory
+    file:
+      dest: /etc/monit/conf-enabled/develop
+      state: directory
+
+  - name: create /etc/monit/conf-enabled/services directory
+    file:
+      dest: /etc/monit/conf-enabled/services
+      state: directory

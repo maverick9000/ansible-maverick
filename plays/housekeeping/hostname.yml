@@ -1,0 +1,15 @@
+- hosts: all
+  become: true
+
+  #vars_prompt:
+  #- name: "set_hostname"
+    #prompt: "Set hostname?"
+    #default: false
+    #private: false
+
+  tasks:
+  - name: set hostname
+    hostname:
+      name: "{{hostname}}"
+    ignore_errors: true
+    #when: set_hostname

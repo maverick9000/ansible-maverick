@@ -1,0 +1,62 @@
+- hosts: all
+  become: true
+
+  roles:
+  - role: jnv.unattended-upgrades
+    unattended_mail: "{{sysadmin_email}}"
+    unattended_remove_unused_dependencies: true
+    unattended_origins_patterns:
+      - 'origin=Ubuntu,archive=${distro_codename}-security'
+
+  - role: weareinteractive.ufw
+    ufw_ipv6: "yes"
+    ufw_rules:
+      - { port: 80, rule: allow }
+      - { port: 443, rule: allow }
+      - { port: 22, rule: allow }
+      - { port: 4949, rule: allow, from_ip: "{{munin_master.ip}}" }
+      - { port: 4948, rule: allow, from_ip: "{{munin_master.ip}}" }
+    ufw_state: enabled
+
+  tasks:
+  - name: Disable ssh password login
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "PasswordAuthentication yes"
+      line: "PasswordAuthentication no"
+
+  - name: Disable ssh root login
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "PermitRootLogin yes"
+      line: "PermitRootLogin no"
+
+  - name: Restart sshd
+    service:
+      name: ssh
+      state: restarted
+
+  - name: Install fail2ban
+    apt:
+      name: fail2ban
+      state: latest
+
+  - name: copy fail2ban jail.conf to jail.local
+    copy:
+      src: /etc/fail2ban/jail.conf
+      dest: /etc/fail2ban/jail.local
+    ignore_errors: true
+
+  - name: set fail2ban bantime to 1h
+    lineinfile:
+      dest: /etc/fail2ban/jail.local
+      regexp: "bantime  = 10m"
+      line: "bantime  = 1h"
+    ignore_errors: true
+
+  - name: set fail2ban findtime to 30m
+    lineinfile:
+      dest: /etc/fail2ban/jail.local
+      regexp: "findtime  = 30m"
+      line: "findtime  = 30m"
+    ignore_errors: true

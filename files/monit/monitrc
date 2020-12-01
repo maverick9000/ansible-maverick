@@ -1,0 +1,17 @@
+set daemon  30
+
+set log syslog
+
+set mailserver localhost
+
+set alert devops@consolemaverick.com not on { instance, action }
+
+set httpd port 2812 and
+    use address localhost
+    allow localhost
+
+include /etc/monit/conf-enabled/*
+include /etc/monit/conf-enabled/services/*
+include /etc/monit/conf-enabled/develop/*
+include /etc/monit/conf-enabled/staging/*
+include /etc/monit/conf-enabled/production/*

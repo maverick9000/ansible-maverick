@@ -1,0 +1,21 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: configure thin process monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/app_thin"
+      dest: /etc/monit/conf-available/{{app.environment}}/{{app.name}}_{{app.environment}}
+    when: num_thins > 0
+
+  - name: configure puma process monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/app_puma"
+      dest: /etc/monit/conf-available/{{app.environment}}/{{app.name}}_{{app.environment}}
+    when: puma_required
+
+  - name: link default process monitoring
+    file:
+      src: /etc/monit/conf-available/{{app.environment}}/{{app.name}}_{{app.environment}}
+      dest: /etc/monit/conf-enabled/{{app.environment}}/{{app.name}}_{{app.environment}}
+      state: link

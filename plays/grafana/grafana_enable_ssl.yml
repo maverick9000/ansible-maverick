@@ -1,0 +1,33 @@
+- hosts: all
+  become: true
+
+  vars:
+    dig: "{{lookup('dig', 'grafana.{{website_url}}')}}"
+
+  tasks:
+  - name: check grafana cert exists
+    stat: path=/etc/letsencrypt/live/grafana.{{website_url}}
+    register: grafana_cert
+    when: grafana_required
+
+  - name:
+    shell: /usr/bin/letsencrypt certonly --webroot -w /var/www/services/grafana -d https://grafana.{{website_url}}
+    when: grafana_required
+
+  - name: create nginx ssl enabled virtualhost for grafana
+    template:
+      src: "../files/nginx/grafana.ssl.conf"
+      dest: /etc/nginx/sites-available/services/grafana.ssl.conf
+    when: grafana_required
+
+  - name: symlink grafana nginx virtualhost configuration
+    file:
+      src: /etc/nginx/sites-available/services/grafana.ssl.conf
+      dest: /etc/nginx/sites-enabled/services/grafana.conf
+    when: grafana_required
+
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
+    when: grafana_required

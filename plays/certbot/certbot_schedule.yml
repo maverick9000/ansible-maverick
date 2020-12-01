@@ -1,0 +1,17 @@
+- hosts: all
+  become: true
+
+  tasks:
+    - name: install 'renew letsencrypt' cron
+      cron:
+        name: "certbot"
+        minute: 30
+        hour: 2
+        day: "*"
+        user: "root"
+        job: '/usr/bin/certbot renew --quiet --post-hook "sudo service nginx reload"'
+
+    - name: Remove /home/{{user}}/letsencrypt.log
+      file:
+        path: /home/{{user}}/letsencrypt.log
+        state: absent

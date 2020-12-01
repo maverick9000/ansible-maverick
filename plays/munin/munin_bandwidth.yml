@@ -1,0 +1,40 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: install munin bandwidth plugin prerequisites
+    apt:
+      name: libswitch-perl
+
+  - name: download bandwidth plugin
+    get_url:
+      url: https://raw.githubusercontent.com/munin-monitoring/contrib/master/plugins/network/bandwidth_
+      dest: /usr/share/munin/plugins/bandwidth_
+      mode: 0755
+
+  - name: install net-tools
+    apt:
+      name: net-tools
+      state: latest
+    when: ansible_distribution_major_version|int == 20
+
+  - name: get name of external network interface
+    shell: route | grep '^default' | grep -o '[^ ]*$'
+    register: network_interface
+
+  - name: print network_interface
+    debug:
+      msg: "network interface:{{network_interface.stdout}}"
+
+  - name: link bandwidth plugin
+    file:
+      src: /usr/share/munin/plugins/bandwidth_
+      dest: "/etc/munin/plugins/bandwidth_{{network_interface.stdout}}"
+      state: link
+
+  - name: restart munin-node
+    service: name=munin-node state=restarted
+
+  - name: restart munin
+    service: name=munin state=restarted
+    ignore_errors: yes

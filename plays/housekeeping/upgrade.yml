@@ -1,0 +1,6 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: upgrade packages
+    shell: apt-get upgrade

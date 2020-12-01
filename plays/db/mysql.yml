@@ -1,0 +1,28 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: install mysql
+    apt:
+      name: mysql-server
+      state: latest
+    when: mysql_required
+
+  - name: configure mysql process monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/mysql"
+      dest: /etc/monit/conf-available/services/mysql
+    when: mysql_required
+
+  - name: link nginx monit process configuration
+    file:
+      src: /etc/monit/conf-available/services/mysql
+      dest: /etc/monit/conf-enabled/services/mysql
+      state: link
+    when: mysql_required
+
+  - name: install mysql monitoring app
+    apt:
+      name: mytop
+      state: latest
+    when: mysql_required

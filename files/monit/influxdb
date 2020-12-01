@@ -1,0 +1,4 @@
+check process influxdb with pidfile /run/influxdb/influxd.pid
+    start program = "/bin/systemctl start influxdb"
+    stop  program = "/bin/systemctl stop influxdb"
+    if 5 restarts within 5 cycles then timeout

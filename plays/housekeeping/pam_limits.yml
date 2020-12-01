@@ -1,0 +1,23 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: increase soft limit to 64000
+    pam_limits:
+      domain: "{{item}}"
+      limit_type: soft
+      limit_item: nofile
+      value: 64000
+    loop:
+      - "*"
+      - "root"
+
+  - name: increase hard limit to 64000
+    pam_limits:
+      domain: "{{item}}"
+      limit_type: hard
+      limit_item: nofile
+      value: 64000
+    loop:
+      - "*"
+      - "root"

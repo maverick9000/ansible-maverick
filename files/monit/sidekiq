@@ -1,0 +1,10 @@
+{% for n in range(num_sidekiq | int) %}
+  check process {{app.name}}_{{app.environment}}_sidekiq_{{n+1}}
+    with pidfile /var/www/{{app.environment}}/{{app.name}}/shared/pids/sidekiq.{{n+1}}.pid
+    start program = "/var/www/{{app.environment}}/{{app.name}}/shared/scripts/sidekiq.sh start {{n+1}}" as uid "{{nginx.user}}" and gid "{{nginx.group}}"
+    stop program = "/var/www/{{app.environment}}/{{app.name}}/shared/scripts/sidekiq.sh stop {{n+1}}" as uid "{{nginx.user}}" and gid "{{nginx.group}}"
+    if totalmem is greater than 2 GB for 3 cycles then restart
+    if 3 restarts within 5 cycles then timeout
+    group {{app.name}}_{{app.environment}}_sidekiq
+    group sidekiq_{{app.environment}}_all
+{% endfor %}

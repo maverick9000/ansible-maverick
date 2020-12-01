@@ -1,0 +1,64 @@
+- hosts: all
+  become: true
+
+  vars:
+    monit_munin_admin_password: "{{ lookup('password', '~/.ansible/'+ansible_hostname+'/monit_munin_admin_password length={{password_length}}') }}"
+
+  tasks:
+  - name: install nginx
+    apt: name=nginx
+
+  - name: optimize nginx.conf file
+    template:
+      src: "{{inventory_dir}}/files/nginx/nginx.conf"
+      dest: /etc/nginx/nginx.conf
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+
+  - name: create robots.txt file for develop/staging sites
+    template:
+      src: "{{inventory_dir}}/files/nginx/robots.txt"
+      dest: /etc/nginx/robots.txt
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+
+  - name: add user to {{nginx.user}} group
+    shell: "usermod -aG {{nginx.user}} {{user}}"
+
+
+  - name: install apache2-utils for htpasswd
+    apt:
+      name: "{{item}}"
+      state: latest
+      update_cache: true
+    loop:
+    - apache2-utils
+
+  - name: create /etc/nginx/auth/production|staging|develop
+    file:
+      dest: /etc/nginx/auth/{{item}}
+      state: directory
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+      mode: 0775
+      recurse: true
+    loop:
+    - staging
+    - production
+    - develop
+
+  - name: configure nginx process monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/nginx"
+      dest: /etc/monit/conf-available/services/nginx
+
+  - name: link nginx monit process configuration
+    file:
+      src: /etc/monit/conf-available/services/nginx
+      dest: /etc/monit/conf-enabled/services/nginx
+      state: link
+
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted

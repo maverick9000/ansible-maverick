@@ -1,0 +1,6 @@
+check process psql with pidfile /var/run/postgresql/{{psql_version}}-main.pid
+    start program = "/bin/systemctl start postgresql"
+    stop program = "/bin/systemctl stop postgresql"
+    if failed unixsocket /var/run/postgresql/.s.PGSQL.5432 protocol pgsql 2 cycles then restart
+    if failed host localhost port 5432 protocol pgsql 2 cycles then restart
+    if 5 restarts within 5 cycles then timeout

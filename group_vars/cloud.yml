@@ -1,0 +1,14 @@
+app:
+  ruby: ruby-2.6.6
+  name: amazon_clone
+  environment: production
+
+configure_db: true
+psql_version: 13
+psql_required: true
+
+global_ruby: ruby-2.4.1
+hostname: gibson
+website_url: "xxx.consolemaverick.com"
+sidekiq_required: true
+redis_required: true

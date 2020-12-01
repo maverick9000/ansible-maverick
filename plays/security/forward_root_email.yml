@@ -1,0 +1,31 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: update cache
+    shell: apt-get update
+
+  - name: remove exim4
+    apt:
+      name: exim4
+      state: absent
+
+  - name: install postfix
+    apt:
+      name: postfix
+      state: latest
+      update_cache: false
+
+  - name: install mutt
+    apt: name=mutt
+
+  - name: forward root email to {{sysadmin_email}}
+    lineinfile:
+      dest: /root/.forward
+      regexp: "{{sysadmin_email}}"
+      line: "{{sysadmin_email}}"
+      state: present
+      create: true
+
+  - name: send test email to maverick@consolemaverick.com
+    command: echo test | mail -s test maverick@consolemaverick.com

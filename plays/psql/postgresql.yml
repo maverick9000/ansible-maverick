@@ -1,0 +1,108 @@
+- import_playbook: "../../plays/monit/monit_directories.yml"
+
+- hosts: all
+  become: true
+
+  tasks:
+  - name: Add postgresql key
+    apt_key: url=https://www.postgresql.org/media/keys/ACCC4CF8.asc state=present
+    when: psql_required
+
+  - name: Add postgresql apt source
+    apt_repository:
+      repo: "deb http://apt.postgresql.org/pub/repos/apt/ {{ansible_distribution_release}}-pgdg main"
+      state: present
+    when: psql_required
+
+  - name: Install postgresql
+    apt:
+      name: postgresql-{{psql_version}}
+      update_cache: true
+    when: psql_required
+
+  - name: install additional postgresql packages
+    apt:
+      name: postgresql-contrib-{{psql_version}}
+      state: latest
+    when: psql_required
+
+  - name: install additional postgresql packages
+    apt:
+      name: libpq-dev
+      state: latest
+    when: psql_required
+
+  - name: install additional postgresql packages
+    apt:
+      name: acl
+      state: latest
+    when: psql_required
+
+  - name: install additional postgresql packages
+    apt:
+      name: pgcli
+      state: latest
+    when: psql_required
+
+  - name: install additional postgresql packages
+    apt:
+      name: postgresql-server-dev-{{psql_version}}
+      state: latest
+    when: psql_required
+
+  - name: install additional postgresql packages
+    apt:
+      name: python-psycopg2
+      state: latest
+    when: psql_required and ansible_distribution_major_version|int <= 18
+
+  - name: install additional postgresql packages
+    shell: pip install psycopg2
+    when: psql_required and ansible_distribution_major_version|int == 20
+
+  - name: configure postgresql process monitoring
+    template:
+      src: "{{inventory_dir}}/files/monit/postgresql"
+      dest: /etc/monit/conf-available/services/postgresql
+    when: psql_required
+
+  - name: link postgresql process monitoring
+    file:
+      src: /etc/monit/conf-available/services/postgresql
+      dest: /etc/monit/conf-enabled/services/postgresql
+      state: link
+    when: psql_required
+
+  - name: create boot_slave.sh script
+    template:
+      src: "{{inventory_dir}}/files/scripts/boot_slave.sh"
+      dest: /root/boot_slave.sh
+      mode: 0700
+    when: psql_required
+
+  - name: allow users to login using password
+    lineinfile:
+      dest: /etc/postgresql/{{psql_version}}/main/pg_hba.conf
+      regexp: "local   all             all                                     peer"
+      line:   "local   all             all                                     md5"
+    when: psql_required
+
+  - name: tune postgresql config
+    postgresql_tune:
+      db_version: "{{psql_version}}"
+      db_type: "{{psql_type}}"
+      total_memory: "{{ansible_memory_mb.real.total}} MB"
+      max_connections: "{{psql_max_connections}}"
+    when: psql_required
+
+  - name: restart postgresql
+    service:
+      name: postgresql
+      state: restarted
+    when: psql_required
+
+  - name: restart monit
+    service:
+      name: monit
+      state: restarted
+    when: psql_required

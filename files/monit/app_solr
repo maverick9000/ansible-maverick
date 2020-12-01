@@ -1,0 +1,6 @@
+check process {{app.name}}_{{app.environment}}_solr with pidfile /var/www/{{app.environment}}/{{app.name}}/shared/pids/solr/sunspot-solr.pid
+  start program = "/var/www/{{app.environment}}/{{app.name}}/shared/scripts/solr.sh start" as uid "{{nginx.user}}" and gid "{{nginx.user}}"
+  stop program = "/var/www/{{app.environment}}/{{app.name}}/shared/scripts/solr.sh stop" as uid "{{nginx.user}}" and gid "{{nginx.user}}"
+  if 3 restarts within 5 cycles then timeout
+  group {{app.name}}_{{app.environment}}_solr
+  group {{app.name}}_{{app.environment}}

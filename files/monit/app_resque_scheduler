@@ -1,0 +1,9 @@
+check process {{app.name}}_{{app.environment}}_resque_scheduler with pidfile /var/www/{{app.environment}}/{{app.name}}/shared/pids/resque_scheduler.pid
+  start program = "/var/www/{{app.environment}}/{{app.name}}/shared/scripts/resque_scheduler.sh start" as uid "{{nginx.user}}" and gid "{{nginx.user}}"
+  stop program = "/var/www/{{app.environment}}/{{app.name}}/shared/scripts/resque_scheduler.sh stop" as uid "{{nginx.user}}" and gid "{{nginx.user}}"
+  if cpu > 60% for 2 cycles then alert
+  if cpu > 80% for 5 cycles then restart
+  if totalmem > 1 GB for 5 cycles then restart
+  if 5 restarts within 5 cycles then timeout
+  group {{app.name}}_{{app.environment}}
+  group {{app.name}}_{{app.environment}}_resque_scheduler

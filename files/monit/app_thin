@@ -1,0 +1,16 @@
+{% for n in range(num_thins | int) %}
+  check process {{app.name}}_{{app.environment}}_thin_{{n+1}} with pidfile /var/www/{{app.environment}}/{{app.name}}/shared/pids/thin.{{n+1}}.pid
+      start program = "/var/www/{{app.environment}}/{{app.name}}/shared/scripts/thin.sh start {{n+1}}"
+      stop program  = "/var/www/{{app.environment}}/{{app.name}}/shared/scripts/thin.sh stop {{n+1}}"
+      if failed unixsocket /var/www/{{app.environment}}/{{app.name}}/shared/sockets/thin.{{n+1}}.socket then alert
+      if failed unixsocket /var/www/{{app.environment}}/{{app.name}}/shared/sockets/thin.{{n+1}}.socket for 2 cycles then restart
+      if cpu > 60% for 2 cycles then alert
+      if cpu > 80% for 5 cycles then restart
+      if totalmem > 1 GB for 5 cycles then restart
+      if 3 restarts within 5 cycles then timeout
+      group {{app.name}}_{{app.environment}}_ruby
+      group {{app.name}}_{{app.environment}}_thin
+      group {{app.name}}_{{app.environment}}
+      group all_{{app.environment}}_ruby
+
+{% endfor %}

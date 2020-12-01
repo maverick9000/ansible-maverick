@@ -1,0 +1,21 @@
+- hosts: all
+  become: true
+
+  tasks:
+  - name: create pg_service.conf
+    template:
+      src: "{{inventory_dir}}/files/munin/pg_service.conf"
+      dest: /etc/postgresql-common/pg_service.conf
+      owner: "{{nginx.user}}"
+      group: "{{nginx.user}}"
+
+  - name: link replication lag munin plugin
+    file:
+      src: /usr/share/munin/plugins/postgres_streaming_
+      dest: /etc/munin/plugins/postgres_streaming_{{master_psql_name}}:{{inventory_hostname_short}}
+      state: link
+
+  - name: restart munin-node
+    service:
+      name: munin-node
+      state: restarted

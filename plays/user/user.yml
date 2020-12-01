@@ -1,0 +1,57 @@
+- import_playbook: "../user/groups.yml"
+
+- hosts: all
+  become: true
+
+  vars_prompt:
+  - name: "create_user"
+    prompt: "Create user? "
+    default: true
+    private: false
+
+  - name: "login"
+    prompt: "Enter a login for the user"
+    private: false
+
+  - name: "ssh_key"
+    prompt: "Enter SSH public key"
+    private: false
+
+  - name: 'is_admin'
+    prompt: 'admin?'
+    private: false
+    default: false
+
+  vars:
+    clear_text_password: "{{ lookup('password', '~/.ansible/credentials/'+login+'@'+ansible_hostname+' length={{password_length}}') }}"
+
+  tasks:
+  - name: adding user
+    user:
+      name: "{{login}}"
+      shell: /bin/bash
+      password: "{{item}}"
+      groups: "{{nginx.user}},rvm,docker,staff"
+    with_password: ~/.ansible/user/{{login}}@{{ansible_hostname}} encrypt=sha256_crypt
+    when: create_user
+
+  - copy:
+      src: ~/.ansible/user/{{login}}@{{ansible_hostname}}
+      dest: /home/{{login}}/password
+      owner: "{{login}}"
+      group: "{{login}}"
+      mode: 0640
+    when: create_user
+
+  - name: add ssh key
+    authorized_key:
+      user: "{{login}}"
+      key: "{{ssh_key}}"
+    when: create_user and ssh_key != ''
+
+  - name: add to admin user group
+    user:
+      name: "{{login}}"
+      groups: admin
+      append: true
+    when: is_admin
